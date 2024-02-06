@@ -1,3 +1,5 @@
+/// <reference types="vitest" />
+
 import { unstable_vitePlugin as remix } from "@remix-run/dev";
 import { installGlobals } from "@remix-run/node";
 import { defineConfig } from "vite";
@@ -15,4 +17,23 @@ export default defineConfig({
     port: Number(process.env.PORT) || 3000,
   },
   plugins: [!isStorybook && !isVitest && remix(), tsconfigPaths()],
+  test: {
+    globals: true,
+    setupFiles: ["./tests/setup.ts"],
+    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]], // use jsdom for JSX component tests, node for everything else
+    include: ["**/*.test.tsx", "**/*.test.ts"],
+    coverage: {
+      include: ["**/*"],
+      exclude: [
+        "tests/**",
+        "**/*.d.ts",
+        "**/*.test.*",
+        "**/*.config.*",
+        "**/snapshot-tests/**",
+        "**/*.solution.tsx",
+        "**/coverage/**",
+      ],
+      all: true,
+    },
+  },
 });
