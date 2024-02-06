@@ -21,7 +21,12 @@ module.exports = {
   },
 
   // Base config
-  extends: ["eslint:recommended"],
+  extends: ["eslint:recommended", "plugin:storybook/recommended"],
+
+  rules: {
+    "no-console": "warn",
+    "react/prop-types": [2, { ignore: ["className"] }],
+  },
 
   overrides: [
     // React
