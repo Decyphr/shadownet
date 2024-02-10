@@ -1,7 +1,7 @@
-import { Form, Link } from "@remix-run/react";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
+import { redirect } from "@remix-run/node";
+import { Form, Link, useActionData } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -11,8 +11,45 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+
+import type { ActionFunctionArgs } from "@remix-run/node";
+import { cn } from "~/lib/utils";
+import { loginSchema } from "~/lib/validation/auth-validation";
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+
+  // Replace `Object.fromEntries()` with the parseWithZod helper
+  const submission = parseWithZod(formData, { schema: loginSchema });
+
+  // Report the submission to client if it is not successful
+  if (submission.status !== "success") {
+    return submission.reply();
+  }
+
+  return redirect("/dashboard");
+}
 
 export default function LoginPage() {
+  const lastResult = useActionData<typeof action>();
+
+  const [form, fields] = useForm({
+    // This not only sync the error from the server
+    // But also used as the default value of the form
+    // in case the document is reloaded for progressive enhancement
+    lastResult,
+
+    // To derive all validation attributes
+    constraint: getZodConstraint(loginSchema),
+    // Validate field once user leaves the field
+    shouldValidate: "onBlur",
+    // Then, revalidate field as user types again
+    shouldRevalidate: "onInput",
+  });
+
   return (
     <div className="w-full h-screen bg-background flex flex-col justify-center items-center">
       <Card className="w-full max-w-md">
@@ -23,20 +60,46 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form className="w-full max-w-md space-y-6">
+          <Form
+            method="POST"
+            className="w-full max-w-md space-y-6"
+            id={form.id}
+            aria-invalid={form.errors ? true : undefined}
+            aria-describedby={form.errors ? form.errorId : undefined}
+          >
             <div className="space-y-2">
-              <Label htmlFor="username" className="sr-only">
-                Username
-              </Label>
-              <Input type="text" id="email" name="email" placeholder="Email" />
+              <div>
+                <Label htmlFor="email" className="sr-only">
+                  Email
+                </Label>
+                <Input
+                  id={fields.email.id}
+                  type="email"
+                  name={fields.email.name}
+                  defaultValue={fields.email.initialValue as string}
+                  required={fields.email.required}
+                  aria-invalid={fields.email.errors ? true : undefined}
+                  aria-describedby={
+                    fields.email.errors ? fields.email.errorId : undefined
+                  }
+                  placeholder="user@email.com"
+                />
+                <div id={fields.email.errorId}>{fields.email.errors}</div>
+              </div>
 
               <Label htmlFor="password" className="sr-only">
                 Password
               </Label>
               <Input
+                id={fields.password.id}
                 type="password"
-                id="password"
-                name="password"
+                name={fields.password.name}
+                defaultValue={fields.password.initialValue as string}
+                required={fields.password.required}
+                aria-invalid={fields.password.errors ? true : undefined}
+                aria-describedby={
+                  fields.password.errors ? fields.password.errorId : undefined
+                }
                 placeholder="••••••••"
               />
             </div>
@@ -57,6 +120,12 @@ export default function LoginPage() {
             <Button type="submit" className="w-full">
               Login
             </Button>
+            <div
+              id={form.errorId}
+              className={cn(form.errors ? "block" : "hidden")}
+            >
+              {form.errors}
+            </div>
           </Form>
         </CardContent>
       </Card>
