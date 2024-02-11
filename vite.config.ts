@@ -16,7 +16,14 @@ export default defineConfig({
   server: {
     port: Number(process.env.PORT) || 3000,
   },
-  plugins: [!isStorybook && !isVitest && remix(), tsconfigPaths()],
+  plugins: [
+    !isStorybook &&
+      !isVitest &&
+      remix({
+        ignoredRouteFiles: ["**/.*"],
+      }),
+    tsconfigPaths(),
+  ],
   test: {
     globals: true,
     setupFiles: ["./tests/setup.ts"],

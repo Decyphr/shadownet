@@ -1,9 +1,8 @@
 import * as z from "zod";
 
-import { getInputProps, useForm } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
+import { useForm } from "@conform-to/react";
+import { json, redirect } from "@remix-run/node";
+import { Form, Link, useActionData } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -16,11 +15,13 @@ import {
 import { Checkbox } from "~/components/ui/checkbox";
 import { Field } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
-import { handleNewSession, login, requireAnonymous } from "~/lib/auth.server";
+import { requireAnonymous, signup } from "~/lib/auth.server";
 import { cn } from "~/lib/utils";
-import { LoginFormSchema } from "~/lib/validation/auth-validation";
 
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { prisma } from "~/lib/db.server";
+import { SignupFormSchema } from "~/lib/validation/auth-validation";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // if user is already logged in, redirect to home
@@ -32,58 +33,51 @@ export async function action({ request }: ActionFunctionArgs) {
   await requireAnonymous(request);
   const formData = await request.formData();
 
-  // Replace `Object.fromEntries()` with the parseWithZod helper
   const submission = await parseWithZod(formData, {
-    schema: (intent) =>
-      LoginFormSchema.transform(async (data, ctx) => {
-        if (intent !== null) return { ...data, session: null };
+    schema: SignupFormSchema.superRefine(async (data, ctx) => {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: data.email },
+        select: { id: true },
+      });
 
-        const session = await login(data);
-        if (!session) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Invalid username or password",
-          });
-          return z.NEVER;
-        }
-
-        return { ...data, session };
-      }),
+      if (existingUser) {
+        ctx.addIssue({
+          path: ["email"],
+          code: z.ZodIssueCode.custom,
+          message: "A user already exists with this email",
+        });
+        return;
+      }
+    }),
     async: true,
   });
 
-  // Report the submission to client if it is not successful
-  if (submission.status !== "success" || !submission.value.session) {
+  if (submission.status !== "success") {
     return json(
-      { result: submission.reply({ hideFields: ["password"] }) },
+      { result: submission.reply() },
       { status: submission.status === "error" ? 400 : 200 }
     );
   }
 
-  const { session, remember, redirectTo } = submission.value;
+  await signup({ ...submission.value });
 
-  return handleNewSession({
-    request,
-    session,
-    remember: remember ?? false,
-    redirectTo,
-  });
+  return redirect("/dashboard");
+
+  // TODO: Send verification email
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   const actionData = useActionData<typeof action>();
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo");
 
   const [form, fields] = useForm({
-    id: "login-form",
-    constraint: getZodConstraint(LoginFormSchema),
-    defaultValue: { redirectTo },
+    id: "signup-form",
+    constraint: getZodConstraint(SignupFormSchema),
     lastResult: actionData?.result,
-    shouldRevalidate: "onBlur",
     onValidate({ formData }) {
-      return parseWithZod(formData, { schema: LoginFormSchema });
+      const result = parseWithZod(formData, { schema: SignupFormSchema });
+      return result;
     },
+    shouldRevalidate: "onBlur",
   });
 
   return (
@@ -92,7 +86,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-thin">Login</CardTitle>
           <CardDescription>
-            Need an account? <Link to="/signup">Sign up here.</Link>
+            Need an account? <Link to="/sign-up">Sign up here.</Link>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,6 +98,16 @@ export default function LoginPage() {
             aria-describedby={form.errors ? form.errorId : undefined}
           >
             <div className="space-y-2">
+              <Field
+                field={fields.name}
+                label="Name"
+                placeholder="John Lennon"
+              />
+              <Field
+                field={fields.username}
+                label="Username"
+                placeholder="user_name"
+              />
               <Field
                 field={fields.email}
                 label="Email"
@@ -131,7 +135,6 @@ export default function LoginPage() {
                 Forgot password?
               </Link>
             </div>
-            <input {...getInputProps(fields.redirectTo, { type: "hidden" })} />
             <Button type="submit" className="w-full">
               Login
             </Button>
