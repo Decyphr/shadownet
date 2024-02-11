@@ -1,6 +1,5 @@
 import { useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import { redirect } from "@remix-run/node";
 import { Form, Link, useActionData } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
@@ -12,12 +11,13 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
-import { Input } from "~/components/ui/input";
+import { Field } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
-
-import type { ActionFunctionArgs } from "@remix-run/node";
+import { authenticator } from "~/lib/auth.server";
 import { cn } from "~/lib/utils";
 import { loginSchema } from "~/lib/validation/auth-validation";
+
+import type { ActionFunctionArgs } from "@remix-run/node";
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -30,7 +30,16 @@ export async function action({ request }: ActionFunctionArgs) {
     return submission.reply();
   }
 
-  return redirect("/dashboard");
+  return await authenticator.authenticate("form", request, {
+    successRedirect: "/dashboard",
+    failureRedirect: "/login",
+    context: {
+      formData,
+      email: submission.value.email,
+      password: submission.value.password,
+      rememberMe: submission.value.rememberMe,
+    },
+  });
 }
 
 export default function LoginPage() {
@@ -41,13 +50,16 @@ export default function LoginPage() {
     // But also used as the default value of the form
     // in case the document is reloaded for progressive enhancement
     lastResult,
-
     // To derive all validation attributes
     constraint: getZodConstraint(loginSchema),
     // Validate field once user leaves the field
-    shouldValidate: "onBlur",
+    // shouldValidate: "onBlur",
     // Then, revalidate field as user types again
-    shouldRevalidate: "onInput",
+    // shouldRevalidate: "onInput",
+
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: loginSchema });
+    },
   });
 
   return (
@@ -68,39 +80,17 @@ export default function LoginPage() {
             aria-describedby={form.errors ? form.errorId : undefined}
           >
             <div className="space-y-2">
-              <div>
-                <Label htmlFor="email" className="sr-only">
-                  Email
-                </Label>
-                <Input
-                  id={fields.email.id}
-                  type="email"
-                  name={fields.email.name}
-                  defaultValue={fields.email.initialValue as string}
-                  required={fields.email.required}
-                  aria-invalid={fields.email.errors ? true : undefined}
-                  aria-describedby={
-                    fields.email.errors ? fields.email.errorId : undefined
-                  }
-                  placeholder="user@email.com"
-                />
-                <div id={fields.email.errorId}>{fields.email.errors}</div>
-              </div>
-
-              <Label htmlFor="password" className="sr-only">
-                Password
-              </Label>
-              <Input
-                id={fields.password.id}
+              <Field
+                field={fields.email}
+                label="Email"
+                type="email"
+                placeholder="user@email.com"
+              />
+              <Field
+                field={fields.password}
+                label="Password"
                 type="password"
-                name={fields.password.name}
-                defaultValue={fields.password.initialValue as string}
-                required={fields.password.required}
-                aria-invalid={fields.password.errors ? true : undefined}
-                aria-describedby={
-                  fields.password.errors ? fields.password.errorId : undefined
-                }
-                placeholder="••••••••"
+                placeholder="••••••••••"
               />
             </div>
             <div className="flex items-center justify-between">
