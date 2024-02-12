@@ -1,4 +1,6 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
+
+import Logout from "~/components/auth/logout";
 import { requireUserId } from "~/lib/auth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -7,5 +9,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function DashboardPage() {
-  return <div>Dashboard</div>;
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <Logout />
+    </div>
+  );
 }

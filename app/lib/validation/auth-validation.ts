@@ -21,7 +21,10 @@ export const LoginFormSchema = z.object({
 
 export const SignupFormSchema = z.object({
   email: EmailSchema,
-  password: PasswordSchema,
+});
+
+export const OnboardingFormSchema = z.object({
+  name: z.string().optional(),
   username: UsernameSchema,
-  name: z.string().min(3).max(100),
+  password: PasswordSchema,
 });

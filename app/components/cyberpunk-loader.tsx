@@ -26,7 +26,7 @@ export default function CyberpunkLoader() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="h-full flex items-center justify-center min-h-screen bg-[#050505]">
+    <div className="h-full flex items-center justify-center">
       <div className="flex flex-col gap-4 w-full max-w-3xl text-center text-[#ff2a75]">
         <div className="flex items-center justify-center">
           <svg

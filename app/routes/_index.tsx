@@ -1,7 +1,11 @@
-import { json, type MetaFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import {
+  json,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "@remix-run/node";
 import CyberpunkLoader from "~/components/cyberpunk-loader";
-import { prisma } from "~/lib/db.server";
+
+import { requireUserId } from "~/lib/auth.server";
 
 export const meta: MetaFunction = () => {
   return [
@@ -10,19 +14,17 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export async function loader() {
-  const user = await prisma.user.findMany();
+export async function loader({ request }: LoaderFunctionArgs) {
+  await requireUserId(request);
 
-  return json({ user });
+  return json({});
 }
 
 export default function Index() {
-  const { user } = useLoaderData<typeof loader>();
-
   return (
-    <>
+    <main className="w-full h-screen">
       <CyberpunkLoader />
-      <pre>{JSON.stringify(user, null, 2)}</pre>
-    </>
+      <h1>Welcome to Shadownet</h1>
+    </main>
   );
 }

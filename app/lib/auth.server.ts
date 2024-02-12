@@ -4,13 +4,13 @@ import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
 import invariant from "tiny-invariant";
 
-import { prisma } from "~/lib/db.server";
-import { authSessionStorage } from "~/lib/session.server";
-
-import type { Password, User } from "@prisma/client";
 import { safeRedirect } from "remix-utils/safe-redirect";
 import { SESSION_KEY } from "~/lib/constants";
+import { prisma } from "~/lib/db.server";
+import { authSessionStorage } from "~/lib/session.server";
 import { combineHeaders, combineResponseInits } from "~/lib/utils";
+
+import type { Password, User } from "@prisma/client";
 
 export const authenticator = new Authenticator<User>(authSessionStorage);
 

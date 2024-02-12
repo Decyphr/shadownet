@@ -12,16 +12,17 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Checkbox } from "~/components/ui/checkbox";
 import { Field } from "~/components/ui/form";
-import { Label } from "~/components/ui/label";
-import { requireAnonymous, signup } from "~/lib/auth.server";
+import { requireAnonymous } from "~/lib/auth.server";
 import { cn } from "~/lib/utils";
 
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import SignupEmail from "~/emails/signup-email";
 import { prisma } from "~/lib/db.server";
+import { sendEmail } from "~/lib/email.server";
 import { SignupFormSchema } from "~/lib/validation/auth-validation";
+import { prepareVerification } from "~/lib/verification.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // if user is already logged in, redirect to home
@@ -59,11 +60,32 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  await signup({ ...submission.value });
+  const { email } = submission.value;
+  const { verifyUrl, redirectTo, otp } = await prepareVerification({
+    period: 10 * 60, // 10 minutes
+    request,
+    type: "onboarding",
+    target: email,
+  });
 
-  return redirect("/dashboard");
+  const response = await sendEmail({
+    to: email,
+    subject: `Welcome to Shadownet!`,
+    react: <SignupEmail onboardingUrl={verifyUrl.toString()} otp={otp} />,
+  });
 
-  // TODO: Send verification email
+  if (response.status === "success") {
+    return redirect(redirectTo.toString());
+  } else {
+    return json(
+      {
+        result: submission.reply({ formErrors: [response.error.message] }),
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
 
 export default function SignupPage() {
@@ -84,9 +106,11 @@ export default function SignupPage() {
     <div className="w-full h-screen bg-background flex flex-col justify-center items-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-thin">Login</CardTitle>
+          <CardTitle className="text-2xl font-thin">
+            Create an Account
+          </CardTitle>
           <CardDescription>
-            Need an account? <Link to="/sign-up">Sign up here.</Link>
+            Already registered? <Link to="/login">Login here.</Link>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,48 +123,21 @@ export default function SignupPage() {
           >
             <div className="space-y-2">
               <Field
-                field={fields.name}
-                label="Name"
-                placeholder="John Lennon"
-              />
-              <Field
-                field={fields.username}
-                label="Username"
-                placeholder="user_name"
-              />
-              <Field
                 field={fields.email}
                 label="Email"
                 type="email"
                 placeholder="user@email.com"
               />
-              <Field
-                field={fields.password}
-                label="Password"
-                type="password"
-                placeholder="••••••••••"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox id="remember-me" />
-                <Label
-                  htmlFor="remember-me"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Remember me
-                </Label>
-              </div>
-              <Link to="/forgot-password" className="text-sm">
-                Forgot password?
-              </Link>
             </div>
             <Button type="submit" className="w-full">
-              Login
+              Create Account
             </Button>
             <div
               id={form.errorId}
-              className={cn(form.errors ? "block" : "hidden")}
+              className={cn(
+                "text-center text-xs text-red-400",
+                form.errors ? "block" : "hidden"
+              )}
             >
               {form.errors}
             </div>

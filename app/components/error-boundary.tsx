@@ -1,0 +1,48 @@
+import {
+  isRouteErrorResponse,
+  useParams,
+  useRouteError,
+  type ErrorResponse,
+} from "@remix-run/react";
+
+import { getErrorMessage } from "~/lib/utils";
+
+// import { captureRemixErrorBoundaryError } from "@sentry/remix";
+
+type StatusHandler = (info: {
+  error: ErrorResponse;
+  params: Record<string, string | undefined>;
+}) => JSX.Element | null;
+
+export function GeneralErrorBoundary({
+  defaultStatusHandler = ({ error }) => (
+    <p>
+      {error.status} {error.data}
+    </p>
+  ),
+  statusHandlers,
+  unexpectedErrorHandler = (error) => <p>{getErrorMessage(error)}</p>,
+}: {
+  defaultStatusHandler?: StatusHandler;
+  statusHandlers?: Record<number, StatusHandler>;
+  unexpectedErrorHandler?: (error: unknown) => JSX.Element | null;
+}) {
+  const error = useRouteError();
+  // captureRemixErrorBoundaryError(error);
+  const params = useParams();
+
+  if (typeof document !== "undefined") {
+    console.error(error); // eslint-disable-line no-console
+  }
+
+  return (
+    <div className="container flex items-center justify-center p-20 text-h2">
+      {isRouteErrorResponse(error)
+        ? (statusHandlers?.[error.status] ?? defaultStatusHandler)({
+            error,
+            params,
+          })
+        : unexpectedErrorHandler(error)}
+    </div>
+  );
+}
