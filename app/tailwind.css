@@ -70,9 +70,6 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
 
   a {
     @apply text-foreground/80 transition-colors hover:text-foreground focus:text-foreground;

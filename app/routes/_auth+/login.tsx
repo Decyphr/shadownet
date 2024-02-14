@@ -1,11 +1,12 @@
 import * as z from "zod";
 
-import { getInputProps, useForm } from "@conform-to/react";
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
+import { HoneypotInputs } from "remix-utils/honeypot/react";
 
-import { Button } from "~/components/ui/button";
+import { StatusButton } from "~/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,11 +17,14 @@ import {
 import { Checkbox } from "~/components/ui/checkbox";
 import { Field } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
+import { useIsPending } from "~/hooks/misc";
 import { handleNewSession, login, requireAnonymous } from "~/lib/auth.server";
+import { checkHoneypot } from "~/lib/honeypot.server";
 import { cn } from "~/lib/utils";
 import { LoginFormSchema } from "~/lib/validation/auth-validation";
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { GeneralErrorBoundary } from "~/components/error-boundary";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // if user is already logged in, redirect to home
@@ -31,6 +35,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
   await requireAnonymous(request);
   const formData = await request.formData();
+  checkHoneypot(formData);
 
   // Replace `Object.fromEntries()` with the parseWithZod helper
   const submission = await parseWithZod(formData, {
@@ -71,6 +76,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function LoginPage() {
+  const isPending = useIsPending();
   const actionData = useActionData<typeof action>();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo");
@@ -87,7 +93,7 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="w-full h-screen bg-background flex flex-col justify-center items-center">
+    <main className="w-full h-screen bg-background flex flex-col justify-center items-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-thin">Login</CardTitle>
@@ -96,54 +102,67 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form
-            method="POST"
-            className="w-full max-w-md space-y-6"
-            id={form.id}
-            aria-invalid={form.errors ? true : undefined}
-            aria-describedby={form.errors ? form.errorId : undefined}
-          >
-            <div className="space-y-2">
-              <Field
-                field={fields.email}
-                label="Email"
-                type="email"
-                placeholder="user@email.com"
-              />
-              <Field
-                field={fields.password}
-                label="Password"
-                type="password"
-                placeholder="••••••••••"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox id="remember-me" />
-                <Label
-                  htmlFor="remember-me"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Remember me
-                </Label>
+          <Form method="POST" {...getFormProps(form)}>
+            <HoneypotInputs />
+            <fieldset
+              className="w-full max-w-md space-y-6"
+              disabled={isPending}
+            >
+              <div className="space-y-2">
+                <Field
+                  field={fields.email}
+                  label="Email"
+                  type="email"
+                  placeholder="user@email.com"
+                />
+                <Field
+                  field={fields.password}
+                  label="Password"
+                  type="password"
+                  placeholder="••••••••"
+                />
               </div>
-              <Link to="/forgot-password" className="text-sm">
-                Forgot password?
-              </Link>
-            </div>
-            <input {...getInputProps(fields.redirectTo, { type: "hidden" })} />
-            <Button type="submit" className="w-full">
-              Login
-            </Button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="remember-me" />
+                  <Label
+                    htmlFor="remember-me"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Remember me
+                  </Label>
+                </div>
+                <Link to="/forgot-password" className="text-sm">
+                  Forgot password?
+                </Link>
+              </div>
+              <input
+                {...getInputProps(fields.redirectTo, { type: "hidden" })}
+              />
+              <StatusButton
+                loading={isPending}
+                type="submit"
+                className="w-full"
+              >
+                Login
+              </StatusButton>
+            </fieldset>
             <div
               id={form.errorId}
-              className={cn(form.errors ? "block" : "hidden")}
+              className={cn(
+                "text-xs text-center text-red-400",
+                form.errors ? "block" : "hidden"
+              )}
             >
               {form.errors}
             </div>
           </Form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
+}
+
+export function ErrorBoundary() {
+  return <GeneralErrorBoundary />;
 }

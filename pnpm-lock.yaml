@@ -65,6 +65,9 @@ dependencies:
   clsx:
     specifier: ^2.1.0
     version: 2.1.0
+  crypto-js:
+    specifier: ^4.2.0
+    version: 4.2.0
   dotenv:
     specifier: ^16.4.1
     version: 16.4.1
@@ -88,10 +91,13 @@ dependencies:
     version: 1.4.0(@remix-run/server-runtime@2.6.0)(remix-auth@3.6.0)
   remix-utils:
     specifier: ^7.5.0
-    version: 7.5.0(@remix-run/node@2.6.0)(@remix-run/react@2.6.0)(react@18.2.0)(zod@3.22.4)
+    version: 7.5.0(@remix-run/node@2.6.0)(@remix-run/react@2.6.0)(crypto-js@4.2.0)(react@18.2.0)(zod@3.22.4)
   resend:
     specifier: ^3.1.0
     version: 3.1.0
+  spin-delay:
+    specifier: ^1.2.0
+    version: 1.2.0(react@18.2.0)
   tailwind-merge:
     specifier: ^2.2.1
     version: 2.2.1
@@ -205,6 +211,9 @@ devDependencies:
   prisma:
     specifier: ^5.9.1
     version: 5.9.1
+  remix-flat-routes:
+    specifier: ^0.6.4
+    version: 0.6.4(@remix-run/dev@2.6.0)
   storybook:
     specifier: ^7.6.12
     version: 7.6.13
@@ -3934,6 +3943,15 @@ packages:
       source-map: 0.7.4
       typescript: 5.3.3
 
+  /@remix-run/v1-route-convention@0.1.4(@remix-run/dev@2.6.0):
+    resolution: {integrity: sha512-fVTr9YlNLWfaiM/6Y56sOtcY8x1bBJQHY0sDWO5+Z/vjJ2Ni7fe2fwrzs1jUFciMPXqBQdFGePnkuiYLz3cuUA==}
+    peerDependencies:
+      '@remix-run/dev': ^1.15.0 || ^2.0.0
+    dependencies:
+      '@remix-run/dev': 2.6.0(@remix-run/serve@2.6.0)(@types/node@20.11.17)(typescript@5.3.3)(vite@5.0.12)
+      minimatch: 7.4.6
+    dev: true
+
   /@remix-run/web-blob@3.1.0:
     resolution: {integrity: sha512-owGzFLbqPH9PlKb8KvpNJ0NO74HWE2euAn61eEiyCXX/oteoVzTVSN8mpLgDjaxBf2btj5/nUllSUgpyd6IH6g==}
     dependencies:
@@ -6877,6 +6895,10 @@ packages:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  /crypto-js@4.2.0:
+    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    dev: false
 
   /crypto-random-string@2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}
@@ -10229,6 +10251,13 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
+  /minimatch@7.4.6:
+    resolution: {integrity: sha512-sBz8G/YjVniEz6lKPNpKxXwazJe4c19fEfV2GDMX6AjFz+MX9uDWIZW8XreVhkFW3fkIdTv/gxWr/Kks5FFAVw==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: true
+
   /minimatch@9.0.1:
     resolution: {integrity: sha512-0jWhJpD/MdhPXwPuiRkCbfYfSKp2qnn2eOc279qI7f+osl/l+prKSrvhg157zSYvx/1nmgn2NqdT6k2Z7zSH9w==}
     engines: {node: '>=16 || 14 >=14.17'}
@@ -11779,7 +11808,19 @@ packages:
       uuid: 8.3.2
     dev: false
 
-  /remix-utils@7.5.0(@remix-run/node@2.6.0)(@remix-run/react@2.6.0)(react@18.2.0)(zod@3.22.4):
+  /remix-flat-routes@0.6.4(@remix-run/dev@2.6.0):
+    resolution: {integrity: sha512-/0bTfaNSd2O3ak+cCLAlmHIsgm7YWiaBiu5ENUyuSWSNwF/KaHuKFhcHHhozPevQ8ROgCZG9tNbWzH6ktJoprA==}
+    hasBin: true
+    peerDependencies:
+      '@remix-run/dev': ^1.15.0 || ^2
+    dependencies:
+      '@remix-run/dev': 2.6.0(@remix-run/serve@2.6.0)(@types/node@20.11.17)(typescript@5.3.3)(vite@5.0.12)
+      '@remix-run/v1-route-convention': 0.1.4(@remix-run/dev@2.6.0)
+      fs-extra: 11.2.0
+      minimatch: 5.1.6
+    dev: true
+
+  /remix-utils@7.5.0(@remix-run/node@2.6.0)(@remix-run/react@2.6.0)(crypto-js@4.2.0)(react@18.2.0)(zod@3.22.4):
     resolution: {integrity: sha512-vzjDhbdwK+3XxqL2LM7ZPzq0zyjb+77eAWbKhDqhnh0nlA11n3CmTtYzrZYpVf6h24+6m5mD6KnRfcdD3Zrl7w==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
@@ -11817,6 +11858,7 @@ packages:
     dependencies:
       '@remix-run/node': 2.6.0(typescript@5.3.3)
       '@remix-run/react': 2.6.0(react-dom@18.2.0)(react@18.2.0)(typescript@5.3.3)
+      crypto-js: 4.2.0
       react: 18.2.0
       type-fest: 4.10.2
       zod: 3.22.4
@@ -12249,6 +12291,14 @@ packages:
 
   /spdx-license-ids@3.0.17:
     resolution: {integrity: sha512-sh8PWc/ftMqAAdFiBu6Fy6JUOYjqDJBJvIhpfDMyHrr0Rbp5liZqd4TjtQ/RgfLjKFZb+LMx5hpml5qOWy0qvg==}
+
+  /spin-delay@1.2.0(react@18.2.0):
+    resolution: {integrity: sha512-PkZl5FHWOMrwQgoWejG1hBkIlVx4KbdL/37RPr5/pGq5+NWcGx7NNDukFct2yr8yRZuvwEompNR/in9nWj4sTw==}
+    peerDependencies:
+      react: '>=17.0.1'
+    dependencies:
+      react: 18.2.0
+    dev: false
 
   /sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}

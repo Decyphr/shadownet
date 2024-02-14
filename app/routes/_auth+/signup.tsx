@@ -1,10 +1,12 @@
 import * as z from "zod";
 
-import { useForm } from "@conform-to/react";
+import { getFormProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData } from "@remix-run/react";
+import { HoneypotInputs } from "remix-utils/honeypot/react";
 
-import { Button } from "~/components/ui/button";
+import { StatusButton } from "~/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,16 +15,18 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Field } from "~/components/ui/form";
-import { requireAnonymous } from "~/lib/auth.server";
-import { cn } from "~/lib/utils";
-
-import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import SignupEmail from "~/emails/signup-email";
+import { useIsPending } from "~/hooks/misc";
+import { requireAnonymous } from "~/lib/auth.server";
 import { prisma } from "~/lib/db.server";
 import { sendEmail } from "~/lib/email.server";
+import { cn } from "~/lib/utils";
 import { SignupFormSchema } from "~/lib/validation/auth-validation";
-import { prepareVerification } from "~/lib/verification.server";
+
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { GeneralErrorBoundary } from "~/components/error-boundary";
+import { checkHoneypot } from "~/lib/honeypot.server";
+import { prepareVerification } from "~/lib/verification-utils.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // if user is already logged in, redirect to home
@@ -33,6 +37,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
   await requireAnonymous(request);
   const formData = await request.formData();
+  checkHoneypot(formData);
 
   const submission = await parseWithZod(formData, {
     schema: SignupFormSchema.superRefine(async (data, ctx) => {
@@ -89,6 +94,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function SignupPage() {
+  const isPending = useIsPending();
   const actionData = useActionData<typeof action>();
 
   const [form, fields] = useForm({
@@ -103,7 +109,7 @@ export default function SignupPage() {
   });
 
   return (
-    <div className="w-full h-screen bg-background flex flex-col justify-center items-center">
+    <main className="w-full h-screen bg-background flex flex-col justify-center items-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-thin">
@@ -114,24 +120,28 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form
-            method="POST"
-            className="w-full max-w-md space-y-6"
-            id={form.id}
-            aria-invalid={form.errors ? true : undefined}
-            aria-describedby={form.errors ? form.errorId : undefined}
-          >
-            <div className="space-y-2">
-              <Field
-                field={fields.email}
-                label="Email"
-                type="email"
-                placeholder="user@email.com"
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Create Account
-            </Button>
+          <Form method="POST" {...getFormProps(form)}>
+            <HoneypotInputs />
+            <fieldset
+              className="w-full max-w-md space-y-6"
+              disabled={isPending}
+            >
+              <div className="space-y-2">
+                <Field
+                  field={fields.email}
+                  label="Email"
+                  type="email"
+                  placeholder="user@email.com"
+                />
+              </div>
+              <StatusButton
+                loading={isPending}
+                type="submit"
+                className="w-full"
+              >
+                Create Account
+              </StatusButton>
+            </fieldset>
             <div
               id={form.errorId}
               className={cn(
@@ -144,6 +154,10 @@ export default function SignupPage() {
           </Form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
+}
+
+export function ErrorBoundary() {
+  return <GeneralErrorBoundary />;
 }

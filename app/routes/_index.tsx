@@ -3,7 +3,6 @@ import {
   type LoaderFunctionArgs,
   type MetaFunction,
 } from "@remix-run/node";
-import CyberpunkLoader from "~/components/cyberpunk-loader";
 
 import { requireUserId } from "~/lib/auth.server";
 
@@ -22,8 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Index() {
   return (
-    <main className="w-full h-screen">
-      <CyberpunkLoader />
+    <main className="w-full h-screen flex items-center justify-center">
       <h1>Welcome to Shadownet</h1>
     </main>
   );

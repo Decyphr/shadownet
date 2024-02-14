@@ -1,16 +1,19 @@
 import * as z from "zod";
+import {
+  REDIRECT_TO_QUERY_PARAM,
+  VERIFICATION_CODE_QUERY_PARAM,
+  VERIFICATION_TARGET_QUERY_PARAM,
+  VERIFICATION_TYPE_QUERY_PARAM,
+} from "~/lib/constants";
 
-export const codeQueryParam = "code";
-export const targetQueryParam = "target";
-export const typeQueryParam = "type";
-export const redirectToQueryParam = "redirectTo";
 const types = ["onboarding", "reset-password", "change-email", "2fa"] as const;
-const VerificationTypeSchema = z.enum(types);
+export const VerificationTypeSchema = z.enum(types);
+
 export type VerificationTypes = z.infer<typeof VerificationTypeSchema>;
 
 export const VerifySchema = z.object({
-  [codeQueryParam]: z.string().min(6).max(6),
-  [typeQueryParam]: VerificationTypeSchema,
-  [targetQueryParam]: z.string(),
-  [redirectToQueryParam]: z.string().optional(),
+  [VERIFICATION_CODE_QUERY_PARAM]: z.string().min(6).max(6),
+  [VERIFICATION_TYPE_QUERY_PARAM]: VerificationTypeSchema,
+  [VERIFICATION_TARGET_QUERY_PARAM]: z.string(),
+  [REDIRECT_TO_QUERY_PARAM]: z.string().optional(),
 });
