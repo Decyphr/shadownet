@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "remix vite:dev",
     "build": "NODE_ENV=production remix vite:build",
-    "start": "remix-serve ./build/server/index.js",
+    "start": "PORT=8080 remix-serve ./build/server/index.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "typecheck": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",

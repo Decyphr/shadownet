@@ -56,4 +56,4 @@ COPY --from=build /app /app
 # Start the server by default, this can be overwritten at runtime
 ENV PORT=8080
 EXPOSE 8080
-CMD [ "pnpm", "run", "start" ]
+CMD [ "pnpm", "start" ]

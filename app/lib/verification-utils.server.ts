@@ -90,9 +90,7 @@ export function getRedirectToUrl({
   target: string;
   redirectTo?: string;
 }) {
-  const redirectToUrl = new URL(
-    `${getDomainUrl(request)}/${routes.auth.verify}`
-  );
+  const redirectToUrl = new URL(`${getDomainUrl(request)}/verify`);
   redirectToUrl.searchParams.set(VERIFICATION_TYPE_QUERY_PARAM, type);
   redirectToUrl.searchParams.set(VERIFICATION_TARGET_QUERY_PARAM, target);
 
