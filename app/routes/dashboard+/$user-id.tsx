@@ -13,7 +13,7 @@ export default function UserDashboardRoute() {
   return (
     <div>
       <h1>User Dashboard</h1>
-      <p>{userId}</p>
+      <p className="sr-only">{userId}</p>
     </div>
   );
 }

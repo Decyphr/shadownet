@@ -2,6 +2,7 @@
 
 # Adjust NODE_VERSION as desired
 ARG NODE_VERSION=18.19.0
+ARG PNPM_VERSION=8.15.3
 FROM node:${NODE_VERSION}-slim as base
 
 LABEL fly_launch_runtime="Remix/Prisma"
@@ -13,7 +14,6 @@ WORKDIR /app
 ENV NODE_ENV="production"
 
 # Install pnpm
-ARG PNPM_VERSION=8.15.2
 RUN npm install -g pnpm@$PNPM_VERSION
 
 
@@ -22,7 +22,7 @@ FROM base as build
 
 # Install packages needed to build node modules
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3
+    apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3 ca-certificates
 
 # Install node modules
 COPY --link package.json pnpm-lock.yaml ./
@@ -47,7 +47,7 @@ FROM base
 
 # Install packages needed for deployment
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y openssl && \
+    apt-get install --no-install-recommends -y openssl ca-certificates && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Copy built application
