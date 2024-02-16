@@ -1,11 +1,15 @@
-import * as z from "zod";
-
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import { json, redirect } from "@remix-run/node";
-import { Form, Link, useActionData } from "@remix-run/react";
+import {
+  json,
+  redirect,
+  type ActionFunctionArgs,
+  type MetaFunction,
+} from "@remix-run/node";
+import { Form, useActionData } from "@remix-run/react";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 
+import { GeneralErrorBoundary } from "~/components/error-boundary";
 import { StatusButton } from "~/components/ui/button";
 import {
   Card,
@@ -15,47 +19,25 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Field } from "~/components/ui/form";
-import SignupEmail from "~/emails/signup-email";
+import ForgotPasswordEmail from "~/emails/forgot-password-email";
 import { useIsPending } from "~/hooks/misc";
-import { requireAnonymous } from "~/lib/auth.server";
 import { prisma } from "~/lib/db.server";
 import { sendEmail } from "~/lib/email.server";
-import { cn } from "~/lib/utils";
-import { SignupFormSchema } from "~/lib/validation/auth-validation";
-
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { GeneralErrorBoundary } from "~/components/error-boundary";
 import { checkHoneypot } from "~/lib/honeypot.server";
+import { cn } from "~/lib/utils";
+import { ForgotPasswordFormSchema } from "~/lib/validation/auth-validation";
 import { prepareVerification } from "~/lib/verification-utils.server";
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  // if user is already logged in, redirect to home
-  await requireAnonymous(request);
-  return json({});
-}
+export const meta: MetaFunction = () => {
+  return [{ title: "Shadownet | Password Recovery" }];
+};
 
 export async function action({ request }: ActionFunctionArgs) {
-  await requireAnonymous(request);
   const formData = await request.formData();
   checkHoneypot(formData);
 
   const submission = await parseWithZod(formData, {
-    schema: SignupFormSchema.superRefine(async (data, ctx) => {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: data.email },
-        select: { id: true },
-      });
-
-      if (existingUser) {
-        ctx.addIssue({
-          path: ["email"],
-          code: z.ZodIssueCode.custom,
-          message: "A user already exists with this email",
-        });
-        return;
-      }
-    }),
-    async: true,
+    schema: ForgotPasswordFormSchema,
   });
 
   if (submission.status !== "success") {
@@ -64,45 +46,55 @@ export async function action({ request }: ActionFunctionArgs) {
       { status: submission.status === "error" ? 400 : 200 }
     );
   }
-
   const { email } = submission.value;
+
+  const user = await prisma.user.findFirst({
+    where: { email },
+    select: { email: true, username: true },
+  });
+
+  if (!user) {
+    // return as if user was found to prevent enumeration
+    return redirect("/verify?type=reset-password");
+  }
+
   const { verifyUrl, redirectTo, otp } = await prepareVerification({
-    period: 10 * 60, // 10 minutes
+    period: 10 * 60,
     request,
-    type: "onboarding",
+    type: "reset-password",
     target: email,
   });
 
   const response = await sendEmail({
-    to: email,
-    subject: `Welcome to Shadownet!`,
-    react: <SignupEmail onboardingUrl={verifyUrl.toString()} otp={otp} />,
+    to: user.email,
+    subject: `Epic Notes Password Reset`,
+    react: (
+      <ForgotPasswordEmail onboardingUrl={verifyUrl.toString()} otp={otp} />
+    ),
   });
 
   if (response.status === "success") {
     return redirect(redirectTo.toString());
   } else {
     return json(
-      {
-        result: submission.reply({ formErrors: [response.error.message] }),
-      },
-      {
-        status: 500,
-      }
+      { result: submission.reply({ formErrors: [response.error.message] }) },
+      { status: 500 }
     );
   }
 }
 
-export default function SignupPage() {
+export default function ForgotPasswordRoute() {
   const isPending = useIsPending();
   const actionData = useActionData<typeof action>();
 
   const [form, fields] = useForm({
     id: "signup-form",
-    constraint: getZodConstraint(SignupFormSchema),
+    constraint: getZodConstraint(ForgotPasswordFormSchema),
     lastResult: actionData?.result,
     onValidate({ formData }) {
-      const result = parseWithZod(formData, { schema: SignupFormSchema });
+      const result = parseWithZod(formData, {
+        schema: ForgotPasswordFormSchema,
+      });
       return result;
     },
     shouldRevalidate: "onBlur",
@@ -113,10 +105,10 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-thin">
-            Create an Account
+            Forgot your Password?
           </CardTitle>
           <CardDescription>
-            Already registered? <Link to="/login">Login here.</Link>
+            Enter your email address to request a password reset.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -142,7 +134,7 @@ export default function SignupPage() {
                 type="submit"
                 className="w-full"
               >
-                Create Account
+                Request Password Reset
               </StatusButton>
             </fieldset>
             <div

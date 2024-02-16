@@ -1,4 +1,4 @@
-import { json, type MetaFunction } from "@remix-run/node";
+import { json, LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import {
   Links,
   Meta,
@@ -13,18 +13,33 @@ import { GeneralErrorBoundary } from "~/components/error-boundary";
 import { getEnv } from "~/lib/env.server";
 import { honeypot } from "~/lib/honeypot.server";
 
+import { useToast } from "~/components/toaster";
+import { getToast } from "~/lib/toast.server";
+import { combineHeaders } from "~/lib/utils";
+
 import "./tailwind.css";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = () => {
   return [
-    { title: data ? "Epic Notes" : "Error | Epic Notes" },
-    { name: "description", content: `Your own captain's log` },
+    { title: "Shadownet" },
+    {
+      name: "description",
+      content:
+        "Your personal catchall for everything the web will throw at your app.",
+    },
   ];
 };
 
-export async function loader() {
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { toast, headers: toastHeaders } = await getToast(request);
+
   const honeyProps = honeypot.getInputProps();
-  return json({ ENV: getEnv(), honeyProps });
+  return json(
+    { ENV: getEnv(), toast, honeyProps },
+    {
+      headers: combineHeaders(toastHeaders),
+    }
+  );
 }
 
 function Document({
@@ -58,6 +73,9 @@ function Document({
 
 function App() {
   const data = useLoaderData<typeof loader>();
+
+  useToast(data.toast);
+
   return (
     <Document env={data.ENV}>
       <Outlet />

@@ -32,6 +32,7 @@ import {
 } from "~/lib/validation/verification-validation";
 import {
   handleOnboardingVerification,
+  handleResetPasswordVerification,
   isCodeValid,
 } from "~/lib/verification-utils.server";
 
@@ -88,11 +89,14 @@ export async function action({ request }: ActionFunctionArgs) {
         submission,
       });
     }
-    // TODO: implement the rest of the verification types
-    /* case "reset-password": {
+    case "reset-password": {
       await deleteVerification();
-      return handleResetPasswordVerification({ request, formData, submission });
-    } */
+      return handleResetPasswordVerification({
+        request,
+        body: formData,
+        submission,
+      });
+    }
     /* case "change-email": {
       await deleteVerification();
       return handleChangeEmailVerification({ request, formData, submission });
@@ -133,8 +137,7 @@ export default function VerifyRoute() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-thin">Check your email</CardTitle>
           <CardDescription>
-            We&apos;ve sent a code to your email. Enter it below to verify your
-            account.
+            We&apos;ve sent a verification code to your email.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -145,10 +148,17 @@ export default function VerifyRoute() {
               disabled={isPending}
             >
               <Field
-                field={fields[VERIFICATION_CODE_QUERY_PARAM]}
-                label="Code"
-                type="text"
-                inputProps={{ autoComplete: "one-time-code" }}
+                labelProps={{
+                  htmlFor: fields[VERIFICATION_CODE_QUERY_PARAM].id,
+                  children: "Code",
+                }}
+                inputProps={{
+                  ...getInputProps(fields[VERIFICATION_CODE_QUERY_PARAM], {
+                    type: "text",
+                  }),
+                  autoComplete: "one-time-code",
+                }}
+                errors={fields[VERIFICATION_CODE_QUERY_PARAM].errors}
               />
               <input
                 {...getInputProps(fields[VERIFICATION_TYPE_QUERY_PARAM], {

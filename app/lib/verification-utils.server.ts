@@ -5,6 +5,7 @@ import invariant from "tiny-invariant";
 import {
   ONBOARDING_EMAIL_SESSION_KEY,
   REDIRECT_TO_QUERY_PARAM,
+  RESET_PASSWORD_USERNAME_SESSION_KEY,
   VERIFICATION_CODE_QUERY_PARAM,
   VERIFICATION_TARGET_QUERY_PARAM,
   VERIFICATION_TYPE_QUERY_PARAM,
@@ -18,39 +19,9 @@ import {
 } from "~/lib/validation/verification-validation";
 
 import type { Submission } from "@conform-to/react";
-import { redirect } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
+import { requireAnonymous } from "~/lib/auth.server";
 import { verifySessionStorage } from "~/lib/verification.server";
-
-type VerifyFunctionArgs = {
-  request: Request;
-  submission: Submission<
-    z.input<typeof VerifySchema>,
-    string[],
-    z.output<typeof VerifySchema>
-  >;
-  body: FormData | URLSearchParams;
-};
-
-/**
- * Handle Onboarding Verification
- *
- */
-
-export async function handleOnboardingVerification({
-  submission,
-}: VerifyFunctionArgs) {
-  invariant(
-    submission.status === "success",
-    "Submission should be successful by now"
-  );
-  const verifySession = await verifySessionStorage.getSession();
-  verifySession.set(ONBOARDING_EMAIL_SESSION_KEY, submission.value.target);
-  return redirect("/onboarding", {
-    headers: {
-      "set-cookie": await verifySessionStorage.commitSession(verifySession),
-    },
-  });
-}
 
 /**
  * Prepare Verification
@@ -167,41 +138,109 @@ export async function isCodeValid({
   return true;
 }
 
-/* export async function requireRecentVerification(request: Request) {
-  const userId = await requireUserId(request);
-  const shouldReverify = await shouldRequestTwoFA(request);
-  if (shouldReverify) {
-    const reqUrl = new URL(request.url);
-    const redirectUrl = getRedirectToUrl({
-      request,
-      target: userId,
-      type: twoFAVerificationType,
-      redirectTo: reqUrl.pathname + reqUrl.search,
-    });
-    throw await redirectWithToast(redirectUrl.toString(), {
-      title: "Please Reverify",
-      description: "Please reverify your account before proceeding",
-    });
-  }
-} */
+type VerifyFunctionArgs = {
+  request: Request;
+  submission: Submission<
+    z.input<typeof VerifySchema>,
+    string[],
+    z.output<typeof VerifySchema>
+  >;
+  body: FormData | URLSearchParams;
+};
 
-/* export async function shouldRequestTwoFA(request: Request) {
-	const authSession = await authSessionStorage.getSession(
-		request.headers.get('cookie'),
-	)
-	const verifySession = await verifySessionStorage.getSession(
-		request.headers.get('cookie'),
-	)
-	if (verifySession.has(unverifiedSessionIdKey)) return true
-	const userId = await getUserId(request)
-	if (!userId) return false
-	// if it's over two hours since they last verified, we should request 2FA again
-	const userHasTwoFA = await prisma.verification.findUnique({
-		select: { id: true },
-		where: { target_type: { target: userId, type: twoFAVerificationType } },
-	})
-	if (!userHasTwoFA) return false
-	const verifiedTime = authSession.get(verifiedTimeKey) ?? new Date(0)
-	const twoHours = 1000 * 60 * 2
-	return Date.now() - verifiedTime > twoHours
-} */
+/**
+ * Onboarding
+ */
+
+export async function handleOnboardingVerification({
+  submission,
+}: VerifyFunctionArgs) {
+  invariant(
+    submission.status === "success",
+    "Submission should be successful by now"
+  );
+  const verifySession = await verifySessionStorage.getSession();
+  verifySession.set(ONBOARDING_EMAIL_SESSION_KEY, submission.value.target);
+  return redirect("/onboarding", {
+    headers: {
+      "set-cookie": await verifySessionStorage.commitSession(verifySession),
+    },
+  });
+}
+
+/**
+ * Require Onboarding Email
+ *
+ * @param request - The request object.
+ */
+
+export async function requireOnboardingEmail(request: Request) {
+  await requireAnonymous(request);
+  const verifySession = await verifySessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+  const email = verifySession.get(ONBOARDING_EMAIL_SESSION_KEY);
+  if (typeof email !== "string" || !email) {
+    throw redirect("/signup");
+  }
+  return email;
+}
+
+/**
+ * Password Reset
+ *
+ */
+
+export async function handleResetPasswordVerification({
+  submission,
+}: VerifyFunctionArgs) {
+  invariant(
+    submission.status === "success",
+    "Submission should be successful by now"
+  );
+  const target = submission.value.target;
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ email: target }, { username: target }] },
+    select: { email: true, username: true },
+  });
+  // we don't want to say the user is not found if the email is not found
+  // because that would allow an attacker to check if an email is registered
+  if (!user) {
+    return json(
+      {
+        result: submission.reply({ fieldErrors: { code: ["Invalid code"] } }),
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  const verifySession = await verifySessionStorage.getSession();
+  verifySession.set(RESET_PASSWORD_USERNAME_SESSION_KEY, user.username);
+  return redirect("/reset-password", {
+    headers: {
+      "set-cookie": await verifySessionStorage.commitSession(verifySession),
+    },
+  });
+}
+
+/**
+ * Require Reset Password Username
+ *
+ * @param request - The request object.
+ */
+
+export async function requireResetPasswordUsername(request: Request) {
+  await requireAnonymous(request);
+  const verifySession = await verifySessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+  const resetPasswordUsername = verifySession.get(
+    RESET_PASSWORD_USERNAME_SESSION_KEY
+  );
+  if (typeof resetPasswordUsername !== "string" || !resetPasswordUsername) {
+    throw redirect("/login");
+  }
+  return resetPasswordUsername;
+}

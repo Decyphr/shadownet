@@ -12,7 +12,10 @@ export const VerificationTypeSchema = z.enum(types);
 export type VerificationTypes = z.infer<typeof VerificationTypeSchema>;
 
 export const VerifySchema = z.object({
-  [VERIFICATION_CODE_QUERY_PARAM]: z.string().min(6).max(6),
+  [VERIFICATION_CODE_QUERY_PARAM]: z
+    .string({ required_error: "Verification code is required" })
+    .min(6)
+    .max(6),
   [VERIFICATION_TYPE_QUERY_PARAM]: VerificationTypeSchema,
   [VERIFICATION_TARGET_QUERY_PARAM]: z.string(),
   [REDIRECT_TO_QUERY_PARAM]: z.string().optional(),

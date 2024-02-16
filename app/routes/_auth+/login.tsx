@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
-import { Field } from "~/components/ui/form";
+import { ErrorList, Field } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
 import { useIsPending } from "~/hooks/misc";
 import { handleNewSession, login, requireAnonymous } from "~/lib/auth.server";
@@ -110,16 +110,24 @@ export default function LoginPage() {
             >
               <div className="space-y-2">
                 <Field
-                  field={fields.email}
-                  label="Email"
-                  type="email"
-                  placeholder="user@email.com"
+                  labelProps={{ children: "Email" }}
+                  inputProps={{
+                    ...getInputProps(fields.email, { type: "email" }),
+                    autoFocus: true,
+                    className: "lowercase",
+                    autoComplete: "email",
+                    placeholder: "user@email.com",
+                  }}
+                  errors={fields.email.errors}
                 />
                 <Field
-                  field={fields.password}
-                  label="Password"
-                  type="password"
-                  placeholder="••••••••"
+                  labelProps={{ children: "Password" }}
+                  inputProps={{
+                    ...getInputProps(fields.password, { type: "password" }),
+                    autoComplete: "current-password",
+                    placeholder: "••••••••••••",
+                  }}
+                  errors={fields.password.errors}
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -147,15 +155,11 @@ export default function LoginPage() {
                 Login
               </StatusButton>
             </fieldset>
-            <div
-              id={form.errorId}
-              className={cn(
-                "text-xs text-center text-red-400",
-                form.errors ? "block" : "hidden"
-              )}
-            >
-              {form.errors}
-            </div>
+            {form.errorId ? (
+              <div className={cn("px-4 pb-2 pt-1 text-red-400 text-center")}>
+                <ErrorList id={form.errorId} errors={form.errors} />
+              </div>
+            ) : null}
           </Form>
         </CardContent>
       </Card>

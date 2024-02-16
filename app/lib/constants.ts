@@ -10,5 +10,8 @@ export const VERIFICATION_TARGET_QUERY_PARAM = "target";
 export const VERIFICATION_TYPE_QUERY_PARAM = "type";
 export const REDIRECT_TO_QUERY_PARAM = "redirectTo";
 
-// onboarding constants
 export const ONBOARDING_EMAIL_SESSION_KEY = "onboardingEmail";
+export const RESET_PASSWORD_USERNAME_SESSION_KEY = "resetPasswordUsername";
+
+// toast constants
+export const TOAST_KEY = "toast"; // Key for toast session

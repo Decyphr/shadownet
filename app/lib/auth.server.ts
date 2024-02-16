@@ -248,6 +248,31 @@ export async function logout(
 }
 
 /**
+ * Reset User Password
+ *
+ */
+
+export async function resetUserPassword({
+  username,
+  password,
+}: {
+  username: User["username"];
+  password: string;
+}) {
+  const hashedPassword = await getPasswordHash(password);
+  return prisma.user.update({
+    where: { username },
+    data: {
+      password: {
+        update: {
+          hash: hashedPassword,
+        },
+      },
+    },
+  });
+}
+
+/**
  * Get Password Hash - Returns the hashed password
  *
  * @param password

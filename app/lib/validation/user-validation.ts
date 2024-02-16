@@ -1,5 +1,10 @@
 import * as z from "zod";
 
+export const NameSchema = z
+  .string({ required_error: "Name is required" })
+  .min(3, { message: "Name is too short" })
+  .max(40, { message: "Name is too long" });
+
 export const UsernameSchema = z
   .string({ required_error: "Username is required" })
   .min(3, { message: "Username is too short" })
@@ -22,3 +27,15 @@ export const PasswordSchema = z
   .string({ required_error: "Password is required" })
   .min(8, { message: "Password is too short" })
   .max(100, { message: "Password is too long" });
+
+export const PasswordAndConfirmPasswordSchema = z
+  .object({ password: PasswordSchema, confirmPassword: PasswordSchema })
+  .superRefine(({ confirmPassword, password }, ctx) => {
+    if (confirmPassword !== password) {
+      ctx.addIssue({
+        path: ["confirmPassword"],
+        code: "custom",
+        message: "The passwords must match",
+      });
+    }
+  });
