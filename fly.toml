@@ -6,6 +6,13 @@
 app = 'shadownet'
 primary_region = 'den'
 
+kill_signal = "SIGINT"
+kill_timeout = 5
+
+[env]
+  PORT = "8080"
+  NODE_ENV = "production"
+
 [build]
 
 [[vm]]
