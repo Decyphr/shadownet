@@ -26,6 +26,7 @@ import { SignupFormSchema } from "~/lib/validation/auth-validation";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { GeneralErrorBoundary } from "~/components/error-boundary";
 import { checkHoneypot } from "~/lib/honeypot.server";
+import { routes } from "~/lib/routing";
 import { prepareVerification } from "~/lib/verification-utils.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -116,7 +117,7 @@ export default function SignupPage() {
             Create an Account
           </CardTitle>
           <CardDescription>
-            Already registered? <Link to="/login">Login here.</Link>
+            Already registered? <Link to={routes.auth.login}>Login here.</Link>
           </CardDescription>
         </CardHeader>
         <CardContent>

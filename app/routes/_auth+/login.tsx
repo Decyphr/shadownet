@@ -25,6 +25,7 @@ import { LoginFormSchema } from "~/lib/validation/auth-validation";
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { GeneralErrorBoundary } from "~/components/error-boundary";
+import { routes } from "~/lib/routing";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // if user is already logged in, redirect to home
@@ -98,7 +99,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-thin">Login</CardTitle>
           <CardDescription>
-            Need an account? <Link to="/signup">Sign up here.</Link>
+            Need an account? <Link to={routes.auth.signup}>Sign up here.</Link>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -140,7 +141,7 @@ export default function LoginPage() {
                     Remember me
                   </Label>
                 </div>
-                <Link to="/forgot-password" className="text-sm">
+                <Link to={routes.auth.forgotPassword} className="text-sm">
                   Forgot password?
                 </Link>
               </div>

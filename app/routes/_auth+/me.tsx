@@ -1,6 +1,7 @@
 import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { logout, requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/db.server";
+import { routes } from "~/lib/routing";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await requireUserId(request);
@@ -10,7 +11,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const loginParams = new URLSearchParams([
       ["redirectTo", `${requestUrl.pathname}${requestUrl.search}`],
     ]);
-    const redirectTo = `/login?${loginParams}`;
+    const redirectTo = `${routes.auth.login}?${loginParams}`;
     await logout({ request, redirectTo });
     return redirect(redirectTo);
   }

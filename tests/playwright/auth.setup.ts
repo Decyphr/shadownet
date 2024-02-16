@@ -1,4 +1,5 @@
 import { expect, test as setup } from "@playwright/test";
+import { routes } from "~/lib/routing";
 
 const authFile = "test/playwright/.auth/user.json";
 
@@ -8,7 +9,7 @@ const user = {
 };
 
 setup("authenticate", async ({ page }) => {
-  await page.goto("/login");
+  await page.goto(routes.auth.login);
   await page.getByTestId("login-email").fill(user.email);
   await page.getByTestId("login-password").fill(user.password);
   await page.getByTestId("login-submit").click();

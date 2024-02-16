@@ -133,82 +133,85 @@ export default function OnboardingRoute() {
           <Form method="POST" {...getFormProps(form)}>
             <HoneypotInputs />
             <fieldset
-              className="w-full max-w-md space-y-2"
+              className="w-full max-w-md space-y-4"
               disabled={isPending}
             >
-              <Field
-                labelProps={{
-                  htmlFor: fields.username.id,
-                  children: "Username",
-                }}
-                inputProps={{
-                  ...getInputProps(fields.username, { type: "text" }),
-                  autoComplete: "username",
-                  className: "lowercase",
-                  placeholder: "user.name",
-                }}
-                errors={fields.username.errors}
-              />
-              <Field
-                labelProps={{ htmlFor: fields.name.id, children: "Name" }}
-                inputProps={{
-                  ...getInputProps(fields.name, { type: "text" }),
-                  autoComplete: "name",
-                  placeholder: "Name",
-                }}
-                errors={fields.name.errors}
-              />
-              <Field
-                labelProps={{
-                  htmlFor: fields.password.id,
-                  children: "Password",
-                }}
-                inputProps={{
-                  ...getInputProps(fields.password, { type: "password" }),
-                  autoComplete: "new-password",
-                  placeholder: "Password", // FIXME: use dots
-                }}
-                errors={fields.password.errors}
-              />
+              <div className="space-y-2">
+                <Field
+                  labelProps={{
+                    htmlFor: fields.username.id,
+                    children: "Username",
+                  }}
+                  inputProps={{
+                    ...getInputProps(fields.username, { type: "text" }),
+                    autoComplete: "username",
+                    className: "lowercase",
+                    placeholder: "user_name",
+                  }}
+                  errors={fields.username.errors}
+                />
+                <Field
+                  labelProps={{ htmlFor: fields.name.id, children: "Name" }}
+                  inputProps={{
+                    ...getInputProps(fields.name, { type: "text" }),
+                    autoComplete: "name",
+                    placeholder: "Name",
+                  }}
+                  errors={fields.name.errors}
+                />
+                <Field
+                  labelProps={{
+                    htmlFor: fields.password.id,
+                    children: "Password",
+                  }}
+                  inputProps={{
+                    ...getInputProps(fields.password, { type: "password" }),
+                    autoComplete: "new-password",
+                    placeholder: "Password",
+                  }}
+                  errors={fields.password.errors}
+                />
 
-              <Field
-                labelProps={{
-                  htmlFor: fields.confirmPassword.id,
-                  children: "Confirm Password",
-                }}
-                inputProps={{
-                  ...getInputProps(fields.confirmPassword, {
-                    type: "password",
-                  }),
-                  autoComplete: "new-password",
-                  placeholder: "Confirm Password",
-                }}
-                errors={fields.confirmPassword.errors}
-              />
+                <Field
+                  labelProps={{
+                    htmlFor: fields.confirmPassword.id,
+                    children: "Confirm Password",
+                  }}
+                  inputProps={{
+                    ...getInputProps(fields.confirmPassword, {
+                      type: "password",
+                    }),
+                    autoComplete: "new-password",
+                    placeholder: "Confirm Password",
+                  }}
+                  errors={fields.confirmPassword.errors}
+                />
+              </div>
 
-              <CheckboxField
-                labelProps={{
-                  htmlFor: fields.agreeToTermsOfServiceAndPrivacyPolicy.id,
-                  children:
-                    "Do you agree to our Terms of Service and Privacy Policy?",
-                }}
-                buttonProps={getInputProps(
-                  fields.agreeToTermsOfServiceAndPrivacyPolicy,
-                  { type: "checkbox" }
-                )}
-                errors={fields.agreeToTermsOfServiceAndPrivacyPolicy.errors}
-              />
-              <CheckboxField
-                labelProps={{
-                  htmlFor: fields.remember.id,
-                  children: "Remember me",
-                }}
-                buttonProps={getInputProps(fields.remember, {
-                  type: "checkbox",
-                })}
-                errors={fields.remember.errors}
-              />
-
+              <div className="space-y-2">
+                <CheckboxField
+                  labelProps={{
+                    htmlFor: fields.agreeToTermsOfServiceAndPrivacyPolicy.id,
+                    children:
+                      "Do you agree to our Terms of Service and Privacy Policy?",
+                  }}
+                  buttonProps={getInputProps(
+                    fields.agreeToTermsOfServiceAndPrivacyPolicy,
+                    { type: "checkbox" }
+                  )}
+                  errors={fields.agreeToTermsOfServiceAndPrivacyPolicy.errors}
+                />
+                <CheckboxField
+                  labelProps={{
+                    htmlFor: fields.remember.id,
+                    children: "Remember me",
+                  }}
+                  buttonProps={getInputProps(fields.remember, {
+                    type: "checkbox",
+                  })}
+                  errors={fields.remember.errors}
+                />
+              </div>
               <input
                 {...getInputProps(fields.redirectTo, { type: "hidden" })}
               />

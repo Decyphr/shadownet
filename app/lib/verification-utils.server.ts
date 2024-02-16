@@ -1,7 +1,9 @@
 import * as z from "zod";
 
+import type { Submission } from "@conform-to/react";
+import { json, redirect } from "@remix-run/node";
 import invariant from "tiny-invariant";
-
+import { requireAnonymous } from "~/lib/auth.server";
 import {
   ONBOARDING_EMAIL_SESSION_KEY,
   REDIRECT_TO_QUERY_PARAM,
@@ -11,16 +13,13 @@ import {
   VERIFICATION_TYPE_QUERY_PARAM,
 } from "~/lib/constants";
 import { prisma } from "~/lib/db.server";
+import { routes } from "~/lib/routing";
 import { generateTOTP, verifyTOTP } from "~/lib/totp.server";
 import { getDomainUrl } from "~/lib/utils";
 import {
   VerificationTypes,
   VerifySchema,
 } from "~/lib/validation/verification-validation";
-
-import type { Submission } from "@conform-to/react";
-import { json, redirect } from "@remix-run/node";
-import { requireAnonymous } from "~/lib/auth.server";
 import { verifySessionStorage } from "~/lib/verification.server";
 
 /**
@@ -91,7 +90,9 @@ export function getRedirectToUrl({
   target: string;
   redirectTo?: string;
 }) {
-  const redirectToUrl = new URL(`${getDomainUrl(request)}/verify`);
+  const redirectToUrl = new URL(
+    `${getDomainUrl(request)}/${routes.auth.verify}`
+  );
   redirectToUrl.searchParams.set(VERIFICATION_TYPE_QUERY_PARAM, type);
   redirectToUrl.searchParams.set(VERIFICATION_TARGET_QUERY_PARAM, target);
 
@@ -181,7 +182,7 @@ export async function requireOnboardingEmail(request: Request) {
   );
   const email = verifySession.get(ONBOARDING_EMAIL_SESSION_KEY);
   if (typeof email !== "string" || !email) {
-    throw redirect("/signup");
+    throw redirect(routes.auth.signup);
   }
   return email;
 }
@@ -218,7 +219,7 @@ export async function handleResetPasswordVerification({
 
   const verifySession = await verifySessionStorage.getSession();
   verifySession.set(RESET_PASSWORD_USERNAME_SESSION_KEY, user.username);
-  return redirect("/reset-password", {
+  return redirect(routes.auth.resetPassword, {
     headers: {
       "set-cookie": await verifySessionStorage.commitSession(verifySession),
     },
@@ -240,7 +241,7 @@ export async function requireResetPasswordUsername(request: Request) {
     RESET_PASSWORD_USERNAME_SESSION_KEY
   );
   if (typeof resetPasswordUsername !== "string" || !resetPasswordUsername) {
-    throw redirect("/login");
+    throw redirect(routes.auth.login);
   }
   return resetPasswordUsername;
 }

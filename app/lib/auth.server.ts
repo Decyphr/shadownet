@@ -11,6 +11,7 @@ import { authSessionStorage } from "~/lib/session.server";
 import { combineHeaders, combineResponseInits } from "~/lib/utils";
 
 import type { Password, User } from "@prisma/client";
+import { routes } from "~/lib/routing";
 
 export const authenticator = new Authenticator<User>(authSessionStorage);
 
@@ -113,7 +114,7 @@ export async function requireUserId(
         ? null
         : redirectTo ?? `${requestUrl.pathname}${requestUrl.search}`;
     const loginParams = redirectTo ? new URLSearchParams({ redirectTo }) : null;
-    const loginRedirect = ["/login", loginParams?.toString()]
+    const loginRedirect = [routes.auth.login, loginParams?.toString()]
       .filter(Boolean)
       .join("?");
     throw redirect(loginRedirect);

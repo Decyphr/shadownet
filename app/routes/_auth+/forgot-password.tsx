@@ -24,6 +24,7 @@ import { useIsPending } from "~/hooks/misc";
 import { prisma } from "~/lib/db.server";
 import { sendEmail } from "~/lib/email.server";
 import { checkHoneypot } from "~/lib/honeypot.server";
+import { routes } from "~/lib/routing";
 import { cn } from "~/lib/utils";
 import { ForgotPasswordFormSchema } from "~/lib/validation/auth-validation";
 import { prepareVerification } from "~/lib/verification-utils.server";
@@ -55,7 +56,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (!user) {
     // return as if user was found to prevent enumeration
-    return redirect("/verify?type=reset-password");
+    return redirect(`/${routes.auth.verify}?type=reset-password`);
   }
 
   const { verifyUrl, redirectTo, otp } = await prepareVerification({

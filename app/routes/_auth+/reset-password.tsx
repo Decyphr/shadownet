@@ -21,6 +21,7 @@ import {
 import { Field } from "~/components/ui/form";
 import { useIsPending } from "~/hooks/misc";
 import { resetUserPassword } from "~/lib/auth.server";
+import { routes } from "~/lib/routing";
 import { cn } from "~/lib/utils";
 import { ResetPasswordFormSchema } from "~/lib/validation/auth-validation";
 import { requireResetPasswordUsername } from "~/lib/verification-utils.server";
@@ -51,7 +52,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   await resetUserPassword({ username: resetPasswordUsername, password });
   const verifySession = await verifySessionStorage.getSession();
-  return redirect("/login", {
+  return redirect(routes.auth.login, {
     headers: {
       "set-cookie": await verifySessionStorage.destroySession(verifySession),
     },
