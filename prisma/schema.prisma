@@ -20,17 +20,18 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  password Password?
-  sessions Session[]
+  password        Password?
+  sessions        Session[]
+  teamMemberships TeamMembership[]
 }
 
 model Password {
   hash String
 
-  user_id String @unique
-  user    User   @relation(fields: [user_id], references: [id])
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
-  @@index([user_id])
+  @@index([userId])
 }
 
 model Session {
@@ -77,4 +78,82 @@ model Verification {
   expiresAt DateTime?
 
   @@unique([target, type])
+}
+
+model Role {
+  id          String @id @default(cuid())
+  name        String
+  description String @default("")
+
+  teamId      String // Link roles to a specific team
+  team        Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  permissions Permission[]
+  members     TeamMembership[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, teamId]) // Ensure role names are unique within each team
+  @@index([teamId])
+}
+
+model Permission {
+  id          String @id @default(cuid())
+  action      String // e.g., create, read, update, delete
+  entity      String // e.g., user, team, project, etc.
+  access      String // e.g., own, any
+  description String @default("")
+
+  // Permissions linked to roles
+  roles Role[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([action, entity, access])
+}
+
+model Team {
+  id          String  @id @default(cuid())
+  name        String
+  description String? @default("")
+
+  // Teams have multiple members through the TeamMembership relation
+  members TeamMembership[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Project   Project[]
+  roles     Role[]
+}
+
+// Relation table to handle many-to-many relationship between users and teams with roles
+model TeamMembership {
+  id     String @id @default(cuid())
+  userId String
+  teamId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, teamId, roleId])
+  @@index([teamId])
+  @@index([roleId])
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+  slug String @unique
+
+  team   Team   @relation(fields: [teamId], references: [id])
+  teamId String
+
+  @@unique([slug, teamId])
+  // non-unique foreign key
+  @@index([teamId])
 }

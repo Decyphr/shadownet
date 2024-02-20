@@ -1,5 +1,6 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { NavLink, Outlet } from "@remix-run/react";
+import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import invariant from "tiny-invariant";
 import Logout from "~/components/auth/logout";
 import { GeneralErrorBoundary } from "~/components/error-boundary";
 
@@ -9,18 +10,26 @@ import {
   ResizablePanelGroup,
 } from "~/components/ui/resizable";
 import { requireUserId } from "~/lib/auth.server";
-import { routes } from "~/lib/routing";
+import { generateRoute, routes } from "~/lib/routing";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  invariant(params["team-id"], "Team ID is required");
   await requireUserId(request);
-  return json({});
+  return json({ teamId: params["team-id"] });
 }
 
 export default function DashboardLayout() {
+  const { teamId } = useLoaderData<typeof loader>();
+
   const nav = [
-    { label: "Dashboard", href: routes.dashboard.index },
-    { label: "Settings", href: "#" },
-    { label: "Profile", href: "#" },
+    {
+      label: "Projects",
+      href: generateRoute(routes.team.projects, {
+        "team-id": teamId,
+      }),
+    },
+    { label: "Settings", href: "#settings" },
+    { label: "Profile", href: "#profile" },
   ];
 
   return (

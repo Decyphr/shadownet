@@ -118,6 +118,7 @@ export default function LoginPage() {
                     className: "lowercase",
                     autoComplete: "email",
                     placeholder: "user@email.com",
+                    defaultValue: fields.email.value,
                   }}
                   errors={fields.email.errors}
                 />

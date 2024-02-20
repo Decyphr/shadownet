@@ -28,14 +28,14 @@ const auth = {
   resetPassword: "/reset-password",
 };
 
-const dashboard = {
-  index: "/dashboard",
-  user: "/dashboard/[user-id]",
+const team = {
+  index: "/[team-id]",
+  projects: "/[team-id]/projects",
 };
 
 export const routes = {
   auth,
-  dashboard,
+  team,
 };
 
 // Function to replace dynamic segments
