@@ -1,8 +1,8 @@
 /// <reference types="vitest" />
 
-import { unstable_vitePlugin as remix } from "@remix-run/dev";
+import { vitePlugin as remix } from "@remix-run/dev";
 import { installGlobals } from "@remix-run/node";
-import { flatRoutes } from "remix-flat-routes";
+import { DefineRoutesFunction, flatRoutes } from "remix-flat-routes";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -24,7 +24,7 @@ export default defineConfig({
         // ignore all files in routes folder to prevent
         // default remix convention from picking up routes
         ignoredRouteFiles: ["**/*"],
-        routes: async (defineRoutes) => {
+        routes: async (defineRoutes: DefineRoutesFunction) => {
           return flatRoutes("routes", defineRoutes);
         },
       }),
